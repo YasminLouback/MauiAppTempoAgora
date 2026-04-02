@@ -1,25 +1,52 @@
-﻿namespace MauiAppTempoAgora
+﻿using MauiAppTempoAgora.Models;
+using MauiAppTempoAgora.Services;
+
+namespace MauiAppTempoAgora
 {
     public partial class MainPage : ContentPage
     {
-        int count = 0;
-
         public MainPage()
         {
             InitializeComponent();
         }
 
-        private void OnCounterClicked(object sender, EventArgs e)
+        private async void Button_Clicked(object sender, EventArgs e)
         {
-            count++;
+            lbl_res.Text = ""; // Limpa resultados anteriores
 
-            if (count == 1)
-                CounterBtn.Text = $"Clicked {count} time";
-            else
-                CounterBtn.Text = $"Clicked {count} times";
+            if (string.IsNullOrWhiteSpace(txt_cidade.Text))
+            {
+                await DisplayAlert("Aviso", "Preencha a cidade.", "OK");
+                return;
+            }
 
-            SemanticScreenReader.Announce(CounterBtn.Text);
+            try
+            {
+                Tempo? t = await DataService.GetPrevisao(txt_cidade.Text);
+
+                if (t != null)
+                {
+                    string dados_previsao =
+                        $"Cidade: {txt_cidade.Text}\n" +
+                        $"Latitude: {t.lat}\n" +
+                        $"Longitude: {t.lon}\n" +
+                        $"Clima: {t.main}\n" +
+                        $"Descrição: {t.description}\n" +
+                        $"Temp Máx: {t.temp_max}°C\n" +
+                        $"Temp Min: {t.temp_min}°C\n" +
+                        $"Velocidade do Vento: {t.speed} m/s\n" +
+                        $"Visibilidade: {t.visibility} m\n" +
+                        $"Nascer do Sol: {t.sunrise}\n" +
+                        $"Por do Sol: {t.sunset}";
+
+                    lbl_res.Text = dados_previsao;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Exibe alerta específico para erros retornados pelo DataService
+                await DisplayAlert("Erro", ex.Message, "OK");
+            }
         }
     }
-
 }
